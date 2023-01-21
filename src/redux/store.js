@@ -1,5 +1,4 @@
-import { configureStore } from '@reduxjs/toolkit';
-import dataSlice from './dataSlice';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import {
     persistStore,
     persistReducer,
@@ -11,6 +10,9 @@ import {
     REGISTER,
 } from 'redux-persist'
 import storage from 'redux-persist/lib/storage'
+import thunk from 'redux-thunk';
+import { EmailSlice } from './emailSlice';
+import { PageSlice } from './pageSlice';
 
 const persistConfig = {
     key: 'root',
@@ -18,7 +20,16 @@ const persistConfig = {
     storage,
 };
 
-const persistedReducer = persistReducer(persistConfig, dataSlice);
+const rootReducer = combineReducers({
+    page: PageSlice.reducer,
+    email: EmailSlice.reducer
+})
+
+
+
+// const rootReducer = combineReducers({ page: PageSlice, email:EmailSlice })
+
+const persistedReducer = persistReducer(persistConfig, rootReducer);
 
 const store = configureStore({
     reducer: persistedReducer,
@@ -27,6 +38,7 @@ const store = configureStore({
             serializableCheck: {
                 ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER],
             },
+        thunk
         }),
 });
 
