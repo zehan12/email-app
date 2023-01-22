@@ -10,7 +10,11 @@ export const EmailSlice = createSlice({
     },
     reducers: {
         setEmail: (state, actions) => {
-            console.log(state,actions)
+            console.log(state,actions.payload)
+            actions.payload.list.map((item)=>(
+                item.favorite = false,
+                item.read = false
+            ))
             state.email = actions.payload;
         }
 
