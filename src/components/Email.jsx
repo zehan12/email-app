@@ -2,7 +2,7 @@ import React, { Fragment, useLayoutEffect } from "react"
 import { useDispatch, useSelector } from "react-redux";
 import Pagination from "./Pagination";
 import { changePage } from '../redux/pageSlice';
-import { setEmail } from "../redux/emailSlice";
+import { setEmail, setFilters } from "../redux/emailSlice";
 import Filters from "./Filters";
 import { useEffect } from "react";
 import EmailList from "./EmailList";
@@ -13,14 +13,11 @@ import EmailCard from "./EmailCard";
 const Email = () => {
     const dispatch = useDispatch()
     const { page, totalPage } = useSelector(state => state.page);
-
     const [selected, setSelectd] = useState(null)
     const [data, setData] = useState(null)
-
-    const { email, currentEmail, filter } = useSelector(state => state.email)
+    const { email, currentEmail, filter } = useSelector(state => state.email);
 
     console.log(email, currentEmail, filter)
-
 
 
     function getDDMMYYHHMMFormat(numericDate) {
@@ -60,6 +57,10 @@ const Email = () => {
         dispatch(changePage());
     };
 
+    const handleFilters = (val) => {
+        dispatch(setFilters(val))
+    }
+
     const handleSelected = async (id) => {
         console.log(id)
         const res = await fetch(`https://flipkart-email-mock.now.sh/?id=${id}`);
@@ -68,7 +69,6 @@ const Email = () => {
         let regex = /<p>(.*?)<\/p>/g;
         let matches = data.body.match(regex);
         setData(matches)
-
     }
 
     useLayoutEffect(() => {
@@ -78,7 +78,10 @@ const Email = () => {
     return (
         <Fragment>
             <div className="flex justify-between mx-20 my-3 mt-10">
-                <Filters />
+                <Filters
+                    active={filter}
+                    handleFilters={handleFilters}
+                />
                 <Pagination
                     currentPage={page}
                     totalPage={totalPage}
@@ -116,7 +119,7 @@ const Email = () => {
 
                 <main className="flex-1 min-w-0 overflow-auto bg-[#F4F6FA] px-2 ">
                     {
-                        email.length !== 0  &&
+                        email.length !== 0 &&
                         email.list.filter((v, i) => v.id === selected).map((email) => (
                             <div
                                 key={email.id}
@@ -136,17 +139,13 @@ const Email = () => {
                                         </div>
                                     </div>
                                 </div>
-                                {/* <Fragment dangerouslySetInnerHTML={{ __html:data.body }}  /> */}
                                 <div className="mt-8 mx-10">
-                                    {/* <div dangerouslySetInnerHTML={{ __html: data.body }}
-                                        style={{ padding: "10px", fontSize: "17px", textAlign: "left" }}
-                                        className="text-sm gap-2 leading-[1.9] "
-                                    /> */}
+
                                     {data &&
                                         data.map((para) => (
-                                            <div 
-                                            key={para.charAt(4)}
-                                            dangerouslySetInnerHTML={{ __html: para }}
+                                            <div
+                                                key={para.charAt(4)}
+                                                dangerouslySetInnerHTML={{ __html: para }}
                                                 className="my-2"
                                             />
                                         ))
