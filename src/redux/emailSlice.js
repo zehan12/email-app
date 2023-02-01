@@ -1,6 +1,5 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-
 export const EmailSlice = createSlice({
     name: 'emailSlice',
     initialState: {
@@ -10,7 +9,6 @@ export const EmailSlice = createSlice({
     },
     reducers: {
         setEmail: (state, actions) => {
-            console.log(state, actions.payload)
             actions.payload.list.map((item) => (
                 item.favorite = false,
                 item.read = false
@@ -18,12 +16,39 @@ export const EmailSlice = createSlice({
             state.email = actions.payload;
         },
 
-        setRead: ( state, actions ) => {
-            console.log(actions,"value")
+        setRead: (state, actions) => {
+            // console.log(state.email.list)
+            let cloned = { ...actions.payload.email }
+            cloned.list.map((item) => {
+                if (actions.payload.id == item.id) {
+                    item.read = true
+                }
+            });
+            state.email = cloned
         },
         setFilters: (state, actions) => {
             state.filter = actions.payload
+        },
+
+        setFavorite: (state, actions) => {
+            let cloned = { ...actions.payload.email }
+            cloned.list.map((item) => {
+                if (actions.payload.id == item.id) {
+                    item.favorite = true
+                }
+            });
+            state.email = cloned
+        },
+        setUnFavorite: (state, actions) => {
+            let cloned = { ...actions.payload.email }
+            cloned.list.map((item) => {
+                if (actions.payload.id == item.id) {
+                    item.favorite = false
+                }
+            });
+            state.email = cloned
         }
+
     },
 });
 
@@ -31,7 +56,9 @@ export const EmailSlice = createSlice({
 export const {
     setEmail,
     setRead,
-    setFilters
+    setFilters,
+    setFavorite,
+    setUnFavorite
 } = EmailSlice.actions
 
 export default EmailSlice.reducer

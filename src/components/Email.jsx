@@ -1,24 +1,34 @@
-import React, { Fragment, useLayoutEffect } from "react"
-import { useDispatch, useSelector } from "react-redux";
+import React,
+{
+    Fragment,
+    useEffect,
+    useState
+} from "react"
+import {
+    useDispatch,
+    useSelector
+}
+    from "react-redux";
 import Pagination from "./Pagination";
-import { changePage } from '../redux/pageSlice';
-import { setEmail, setFilters } from "../redux/emailSlice";
+import {
+    changePage
+} from '../redux/pageSlice';
+import {
+    setEmail,
+    setFilters,
+    setFavorite,
+    setUnFavorite,
+    setRead
+} from "../redux/emailSlice";
 import Filters from "./Filters";
-import { useEffect } from "react";
-import EmailList from "./EmailList";
-import { useState } from "react";
-import EmailCard from "./EmailCard";
 
 
 const Email = () => {
     const dispatch = useDispatch()
     const { page, totalPage } = useSelector(state => state.page);
-    const [selected, setSelectd] = useState(null)
+    const [selected, setSelected] = useState(null)
     const [data, setData] = useState(null)
     const { email, currentEmail, filter } = useSelector(state => state.email);
-
-    console.log(email, currentEmail, filter)
-
 
     function getDDMMYYHHMMFormat(numericDate) {
         let date = new Date(numericDate)
@@ -29,7 +39,7 @@ const Email = () => {
         if (dd < 10) dd = '0' + dd;
         if (mm < 10) mm = '0' + mm;
         const formattedToday = dd + '/' + mm + '/' + yyyy;
-        return formattedToday + '\xa0\xa0\xa0\xa0' + time
+        return (formattedToday + '\xa0\xa0\xa0\xa0' + time)
     }
 
     const fetchEmails = async () => {
@@ -49,31 +59,28 @@ const Email = () => {
         }
 
         // dispatch(setEmail([]));
-
-
     }, [])
 
     const handlePage = () => {
+        setSelected(null)
         dispatch(changePage());
     };
 
     const handleFilters = (val) => {
+        setSelected(null)
         dispatch(setFilters(val))
     }
 
     const handleSelected = async (id) => {
-        console.log(id)
         const res = await fetch(`https://flipkart-email-mock.now.sh/?id=${id}`);
         const data = await res.json();
-        setSelectd(id)
+
+        dispatch(setRead({ email: email, id: id }))
+        setSelected(id)
         let regex = /<p>(.*?)<\/p>/g;
         let matches = data.body.match(regex);
         setData(matches)
     }
-
-    useLayoutEffect(() => {
-        console.log("effects render", data)
-    }, [])
 
     return (
         <Fragment>
@@ -87,54 +94,81 @@ const Email = () => {
                     totalPage={totalPage}
                     handlePage={handlePage}
                 />
-                {/* <EmailList email={email} /> */}
             </div>
             <div className="min-h-screen flex mx-20">
                 <nav className={`${selected ? "w-[36%]" : "w-full"} flex-none px-2`}>
                     {
                         email.length !== 0 &&
-                        email.list.slice(startIndex, endIndex).map((email, index) => {
+                        email.list.filter((val) => {
+                            if (filter.toLowerCase() === "all") {
+                                return true
+                            }
+                            if (filter.toLowerCase() === "read") {
+                                if (val.read) {
+                                    return true
+                                }
+                            }
 
-                            return (
-                                <div
-                                    onClick={() => handleSelected(email.id)}
-                                    key={email.id}
-                                    className="card md:flex max-w- w-full my-4 p-2 rounded-xl bg-[#FFFFFF]"
-                                    style={{ border: "1px solid black" }}>
-                                    <div className="w-12 h-12 m-3 pt-[6px] bg-[#E54065] text-white font-semibold text-2xl text-center rounded-full">{email.from.name.toUpperCase().charAt(0)} </div>
-                                    <div className="flex-grow text-center md:text-left mb-0 mt-1">
-                                        <h4 className="heading my-0">From: <b>{` ${email.from.name} <${email.from.email}> `}{index}</b></h4>
-                                        <p className="mb-3 mt-2">Subject <b>{email.subject}</b></p>
-                                        <div>
-                                            <p className="mb-3 mt-2">{selected ? email.short_description.substring(0, 50) + " ..." : email.short_description}</p>
-                                            <time className="gap-3">{getDDMMYYHHMMFormat(email.date)}</time>
+                            if (filter.toLowerCase() === "unread") {
+                                if (!val.read) {
+                                    return true
+                                }
+                            }
+                            if (filter.toLowerCase() === "favorites") {
+                                if (val.favorite) {
+                                    return true
+                                }
+                            }
+                        })
+                            .slice(startIndex, endIndex).map((email) => {
+                                return (
+                                    <div
+                                        onClick={() => handleSelected(email.id)}
+                                        key={email.id}
+                                        className="card md:flex max-w- w-full my-4 p-2 rounded-xl "
+                                        style={{ border: "1px solid black", backgroundColor: email.read ? "#F2F2F2" : "" }}>
+                                        <div className="w-12 h-12 m-3 pt-[6px] bg-[#E54065] text-white font-semibold text-2xl text-center rounded-full">{email.from.name.toUpperCase().charAt(0)} </div>
+                                        <div className="flex-grow text-center md:text-left mb-0 mt-1">
+                                            <h4 className="heading my-0">From: <b>{` ${email.from.name} <${email.from.email}> `}</b></h4>
+                                            <p className="mb-3 mt-2">Subject <b>{email.subject}</b></p>
+                                            <div>
+                                                <p className="mb-3 mt-2">{selected ? email.short_description.substring(0, 50) + " ..." : email.short_description}</p>
+                                                <time className="gap-3">{getDDMMYYHHMMFormat(email.date)}</time>
+                                            </div>
+                                            {
+                                                email.favorite ? <div className="text-[#E54065] font-semibold">Favorite</div> : ""
+                                            }
                                         </div>
                                     </div>
-                                </div>
-                            )
+                                )
 
-                        })
+                            })
                     }
                 </nav>
 
                 <main className="flex-1 min-w-0 overflow-auto bg-[#F4F6FA] px-2 ">
                     {
                         email.length !== 0 &&
-                        email.list.filter((v, i) => v.id === selected).map((email) => (
+                        email.list.filter((v, i) => v.id === selected).map((item) => (
                             <div
-                                key={email.id}
+                                key={item.id}
                                 className="card flex flex-col max-w- w-full my-4 p-2 rounded-xl bg-[#FFFFFF]"
                                 style={{ border: "1px solid black" }}>
                                 <div className="flex mx-6">
-                                    <div className="w-12 h-12 m-3 pt-[6px] bg-[#E54065] text-white font-semibold text-2xl text-center rounded-full">{email.from.name.toUpperCase().charAt(0)} </div>
+                                    <div className="w-12 h-12 m-3 pt-[6px] bg-[#E54065] text-white font-semibold text-2xl text-center rounded-full">{item.from.name.toUpperCase().charAt(0)} </div>
                                     <div className="flex-grow text-center md:text-left mb-0 ml-3">
                                         <div className="flex justify-between">
                                             <div>
-                                                <p className="mb-3 mt-3 text-3xl"><b>{email.subject}</b></p>
-                                                <time className="">{getDDMMYYHHMMFormat(email.date)}</time>
+                                                <p className="mb-3 mt-3 text-3xl"><b>{item.subject}</b></p>
+                                                <time className="">{getDDMMYYHHMMFormat(item.date)}</time>
                                             </div>
                                             <div className="mt-5">
-                                                <button className="bg-[#E54065] text-white text-xs font-semibold h-7 px-4 rounded-2xl">Mark as favorite</button>
+                                                {
+                                                    item.favorite === false ?
+                                                        <button onClick={() => dispatch(setFavorite({ email: email, id: item.id }))} className="bg-[#E54065] text-white text-xs font-semibold h-7 px-4 rounded-2xl">Mark as favorite</button> :
+                                                        <button onClick={() => dispatch(setUnFavorite({ email: email, id: item.id }))} className="bg-[#E54065] text-white text-xs font-semibold h-7 px-4 rounded-2xl">Remove from favorite</button>
+                                                }
+
                                             </div>
                                         </div>
                                     </div>
